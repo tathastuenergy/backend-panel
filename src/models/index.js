@@ -1,0 +1,10 @@
+module.exports.Customer = require('./customer.model');
+module.exports.User = require('./user.model');
+module.exports.LoginLog = require('./loginLog.model');
+module.exports.ContactUs = require('./contactUs.model');
+module.exports.Estimate = require('./estimate.model');
+module.exports.Inventory = require('./inventory.model');
+module.exports.Invoice = require('./invoice.model');
+module.exports.Counter = require('./counter.model');
+module.exports.Company = require('./company.model');
+module.exports.Payment = require('./payment.model')
