@@ -440,16 +440,16 @@ exports.loginSendOtp = {
       );
     }
 
-    // Check cooldown period
-    if (user.otpLastSentAt && Date.now() - user.otpLastSentAt < OTP_COOLDOWN) {
-      const remainingTime = Math.ceil(
-        (OTP_COOLDOWN - (Date.now() - user.otpLastSentAt)) / 1000
-      );
-      throw new ApiError(
-        httpStatus.TOO_MANY_REQUESTS,
-        `Please wait ${remainingTime} seconds before requesting a new OTP`
-      );
-    }
+    // Check cooldown period 
+    // if (user.otpLastSentAt && Date.now() - user.otpLastSentAt < OTP_COOLDOWN) {
+    //   const remainingTime = Math.ceil(
+    //     (OTP_COOLDOWN - (Date.now() - user.otpLastSentAt)) / 1000
+    //   );
+    //   throw new ApiError(
+    //     httpStatus.TOO_MANY_REQUESTS,
+    //     `Please wait ${remainingTime} seconds before requesting a new OTP`
+    //   );
+    // }
 
     // Generate and hash OTP
     const otp = generateOtp();
@@ -642,15 +642,15 @@ exports.resendOtp = {
     }
 
     // Check cooldown
-    if (user.otpLastSentAt && Date.now() - user.otpLastSentAt < OTP_COOLDOWN) {
-      const remainingTime = Math.ceil(
-        (OTP_COOLDOWN - (Date.now() - user.otpLastSentAt)) / 1000
-      );
-      throw new ApiError(
-        httpStatus.TOO_MANY_REQUESTS,
-        `Please wait ${remainingTime} seconds before requesting a new OTP`
-      );
-    }
+    // if (user.otpLastSentAt && Date.now() - user.otpLastSentAt < OTP_COOLDOWN) {
+    //   const remainingTime = Math.ceil(
+    //     (OTP_COOLDOWN - (Date.now() - user.otpLastSentAt)) / 1000
+    //   );
+    //   throw new ApiError(
+    //     httpStatus.TOO_MANY_REQUESTS,
+    //     `Please wait ${remainingTime} seconds before requesting a new OTP`
+    //   );
+    // }
 
     // Generate new OTP
     const otp = generateOtp();

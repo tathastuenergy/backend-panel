@@ -1,9 +1,9 @@
-const httpStatus = require('http-status');
-const ApiError = require('../utils/ApiError');
-const Joi = require('joi');
-const { Inventory } = require('../models');
-const { handlePagination } = require('../utils/helper');
-const XLSX = require('xlsx');
+const httpStatus = require("http-status");
+const ApiError = require("../utils/ApiError");
+const Joi = require("joi");
+const { Inventory } = require("../models");
+const { handlePagination } = require("../utils/helper");
+const XLSX = require("xlsx");
 
 const createInventory = {
   validation: {
@@ -19,16 +19,16 @@ const createInventory = {
   handler: async (req, res) => {
     try {
       const { name } = req.body;
-
+      
       // 🔍 Check duplicate inventory name
       const inventoryExist = await Inventory.findOne({
-        name: { $regex: `^${name}$`, $options: 'i' }, // case-insensitive
+        name: { $regex: `^${name}$`, $options: "i" }, // case-insensitive
       });
 
       if (inventoryExist) {
         throw new ApiError(
           httpStatus.BAD_REQUEST,
-          'Inventory name already exists'
+          "Inventory name already exists",
         );
       }
 
@@ -36,44 +36,21 @@ const createInventory = {
 
       return res.status(httpStatus.CREATED).json({
         success: true,
-        message: 'Inventory created successfully!',
+        message: "Inventory created successfully!",
         data: inventory,
       });
     } catch (error) {
+      if (error.code === 11000) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+          success: false,
+          message: "Inventory name already exists",
+        });
+      }
       return res.status(error.statusCode || 500).json({
         success: false,
-        message: error.message || 'Failed to create inventory',
+        message: error.message || "Failed to create inventory",
       });
     }
-  },
-};
-
-const getAllInventory = {
-    handler: async (req, res) => {
-        const { status, search } = req.query;
-
-        const query = {};
-
-        if (status) query.status = status;
-        if (search) query.title = { $regex: search, $options: "i" };
-
-        await handlePagination(Inventory, req, res, query);
-    }
-}
-
-const getInventoryById = {
-  validation: {
-    params: Joi.object().keys({ id: Joi.string().required() }),
-  },
-
-  handler: async (req, res) => {
-    const inventory = await Inventory.findById(req.params.id);
-    if (!inventory) throw new ApiError(404, 'Inventory not found');
-
-    res.json({
-      success: true,
-      data: inventory,
-    });
   },
 };
 
@@ -99,76 +76,106 @@ const updateInventory = {
       // 🔍 Check inventory exists
       const inventory = await Inventory.findById(id);
       if (!inventory) {
-        throw new ApiError(
-          httpStatus.NOT_FOUND,
-          'Inventory item not found'
-        );
+        throw new ApiError(httpStatus.NOT_FOUND, "Inventory item not found");
       }
 
       // 🔍 Duplicate name check (exclude current item)
       const nameExist = await Inventory.findOne({
-        name: { $regex: `^${name}$`, $options: 'i' },
+        name: { $regex: `^${name}$`, $options: "i" },
         _id: { $ne: id },
       });
 
       if (nameExist) {
         throw new ApiError(
           httpStatus.BAD_REQUEST,
-          'Inventory name already exists'
+          "Inventory name already exists",
         );
       }
 
       // ✅ Update inventory
-      const updatedInventory = await Inventory.findByIdAndUpdate(
-        id,
-        req.body,
-        { new: true }
-      );
+      const updatedInventory = await Inventory.findByIdAndUpdate(id, req.body, {
+        new: true,
+      });
 
       return res.status(httpStatus.OK).json({
         success: true,
-        message: 'Inventory updated successfully!',
+        message: "Inventory updated successfully!",
         data: updatedInventory,
       });
     } catch (error) {
+      if (error.code === 11000) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+          success: false,
+          message: "Inventory name already exists",
+        });
+      }
       return res.status(error.statusCode || 500).json({
         success: false,
-        message: error.message || 'Failed to update inventory',
+        message: error.message || "Failed to update inventory",
       });
     }
   },
 };
 
+const getAllInventory = {
+  handler: async (req, res) => {
+    const { status, search } = req.query;
+
+    const query = {};
+
+    if (status) query.status = status;
+    if (search) query.title = { $regex: search, $options: "i" };
+
+    await handlePagination(Inventory, req, res, query);
+  },
+};
+
+const getInventoryById = {
+  validation: {
+    params: Joi.object().keys({ id: Joi.string().required() }),
+  },
+
+  handler: async (req, res) => {
+    const inventory = await Inventory.findById(req.params.id);
+    if (!inventory) throw new ApiError(404, "Inventory not found");
+
+    res.json({
+      success: true,
+      data: inventory,
+    });
+  },
+};
+
 const deleteInventory = {
-    handler: async (req, res) => {
-        const { _id } = req.params;
+  handler: async (req, res) => {
+    const { _id } = req.params;
 
-        const inventoryExist = await Inventory.findOne({ _id });
-        if (!inventoryExist) {
-            throw new ApiError(httpStatus.BAD_REQUEST, 'Inventory not exist');
-        }
-
-        await Inventory.findByIdAndDelete(_id);
-
-        res.send({ message: 'Inventory deleted successfully' });
+    const inventoryExist = await Inventory.findOne({ _id });
+    if (!inventoryExist) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Inventory not exist");
     }
-}
+
+    await Inventory.findByIdAndDelete(_id);
+
+    res.send({ message: "Inventory deleted successfully" });
+  },
+};
 
 const uploadInventoryExcel = {
   handler: async (req, res) => {
     try {
       if (!req.file) {
-        throw new ApiError(httpStatus.BAD_REQUEST, 'Excel file is required');
+        throw new ApiError(httpStatus.BAD_REQUEST, "Excel file is required");
       }
 
       // 📄 Read Excel
-      const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+      const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
       const rows = XLSX.utils.sheet_to_json(sheet);
 
       if (!rows.length) {
-        throw new ApiError(httpStatus.BAD_REQUEST, 'Excel file is empty');
+        throw new ApiError(httpStatus.BAD_REQUEST, "Excel file is empty");
       }
 
       const insertData = [];
@@ -176,17 +183,17 @@ const uploadInventoryExcel = {
 
       for (const row of rows) {
         if (!row.name || !row.unit || !row.hsn || !row.tax || !row.purchase) {
-          skippedData.push({ row, reason: 'Missing required fields' });
+          skippedData.push({ row, reason: "Missing required fields" });
           continue;
         }
 
         // 🔍 Duplicate name check (case-insensitive)
         const exists = await Inventory.findOne({
-          name: { $regex: `^${row.name}$`, $options: 'i' },
+          name: { $regex: `^${row.name}$`, $options: "i" },
         });
 
         if (exists) {
-          skippedData.push({ row, reason: 'Inventory name already exists' });
+          skippedData.push({ row, reason: "Inventory name already exists" });
           continue;
         }
 
@@ -204,7 +211,7 @@ const uploadInventoryExcel = {
 
       return res.status(httpStatus.CREATED).json({
         success: true,
-        message: 'Excel inventory upload completed',
+        message: "Excel inventory upload completed",
         totalInserted: savedData.length,
         totalSkipped: skippedData.length,
         skippedData,
@@ -213,17 +220,17 @@ const uploadInventoryExcel = {
     } catch (error) {
       return res.status(error.statusCode || 500).json({
         success: false,
-        message: error.message || 'Excel upload failed',
+        message: error.message || "Excel upload failed",
       });
     }
   },
 };
 
 module.exports = {
-    createInventory,
-    getAllInventory,
-    getInventoryById,
-    updateInventory,
-    deleteInventory,
-    uploadInventoryExcel
+  createInventory,
+  getAllInventory,
+  getInventoryById,
+  updateInventory,
+  deleteInventory,
+  uploadInventoryExcel,
 };

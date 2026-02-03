@@ -7,6 +7,7 @@ const inventorySchema = mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+       unique: true,
     },
     unit: {
       type: String,
@@ -38,6 +39,10 @@ const inventorySchema = mongoose.Schema(
 // convert mongoose doc to json
 inventorySchema.plugin(toJSON);
 
+inventorySchema.index(
+  { name: 1 },
+  { unique: true, collation: { locale: 'en', strength: 2 } }
+);
 /**
  * @typedef Inventory
  */

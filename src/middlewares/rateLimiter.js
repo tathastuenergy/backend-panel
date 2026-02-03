@@ -3,7 +3,7 @@ const httpStatus = require("http-status");
 
 const otpLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 requests per window
+  max: 15, // 5 requests per window
   message: {
     success: false,
     message: "Too many requests. Please try again later",
